@@ -17,6 +17,7 @@ Exit codes: 0 normal stop; 78 port bind failure.
 import json
 import os
 import re
+import socket
 import sys
 import threading
 import uuid
@@ -51,6 +52,8 @@ def _validate_run_params(params):
     url = params.get("endpoint_url")
     if not isinstance(url, str) or not (0 < len(url) <= MAX_STR):
         return None, "endpoint_url must be a non-empty string"
+    if any(ord(ch) < 0x20 or ord(ch) == 0x7F for ch in url):  # control chars never valid here (ultraQA finding)
+        return None, "endpoint_url contains control characters"
     try:
         parts = urlsplit(url)
     except ValueError:
@@ -149,6 +152,7 @@ def _execute_run(job):
 
 class Handler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
+    timeout = 30  # ultraQA finding: a lying Content-Length must not pin a thread forever
 
     def _reply(self, code, payload, close=False):
         if close:
@@ -180,6 +184,9 @@ class Handler(BaseHTTPRequestHandler):
             return
         try:
             req = json.loads(self.rfile.read(length).decode("utf-8"))
+        except (TimeoutError, socket.timeout, OSError):
+            self._reply(408, {"error": "request body incomplete (timeout)"}, close=True)
+            return
         except (ValueError, UnicodeDecodeError):
             self._reply(400, {"error": "body must be valid JSON"}, close=True)
             return
