@@ -1,0 +1,32 @@
+repo: simongonzalezdc/resonant-stack-bench
+forges:
+  github:
+    role: primary
+    api_base: https://api.github.com
+    token_env: CODESITTER_GITHUB_TOKEN
+model:
+  endpoint: http://192.168.1.72:46410/v1/chat/completions
+  model: qwen3.8-27b
+  key_env: CODESITTER_FLOOR_KEY
+  temperature: 0.2
+  max_tokens: 4000
+fallback_model:
+  endpoint: http://192.168.1.72:46410/v1/chat/completions
+  model: CRACK-Ornith-Uncensored
+  key_env: CODESITTER_FLOOR_KEY
+  temperature: 0.2
+  max_tokens: 4000
+review:
+  secrets: "Never commit or echo secrets, tokens, or credentials."
+  tests: "Changes to logic ship with tests; tests stay green."
+  security: "Flag injection, path traversal, unsafe deserialization, unbounded subprocess."
+  privacy: "No home paths, personal data, or internal org names in tree, output, or docs."
+  hardening: "Service boundary must keep strict per-method params, bounded bodies, timeout+close hygiene."
+severity_vocab: [Critical, Major, Minor, Nit]
+tone: assertive
+tone_fork_override: balanced
+fix:
+  enabled: true
+  merge_own_prs: false
+  max_fix_depth: 2
+  fork_policy: comment-only
