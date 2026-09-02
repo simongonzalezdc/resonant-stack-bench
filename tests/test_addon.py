@@ -5,7 +5,6 @@ Run:  python3 -m unittest discover -s tests -v   (from the add-on root)
 import hashlib
 import json
 import os
-import subprocess
 import sys
 import threading
 import time
@@ -15,7 +14,6 @@ import urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ADDON_ROOT = os.path.dirname(HERE)
-UPSTREAM = os.path.expanduser("~/workspaces/stack-bench")
 sys.path.insert(0, ADDON_ROOT)
 sys.path.insert(0, os.path.join(ADDON_ROOT, "vendor"))
 
@@ -59,11 +57,18 @@ class Service:
 
 class TestVendorPin(unittest.TestCase):  # A4
     """Vendor pin law: the pack is pinned absolutely by the recorded sha256
-    hashes in vendor/VENDOR-MANIFEST.json (frozen at vendor time from the
-    upstream committed tree; verifiable on any machine, no clone needed).
-    Byte-comparison against a live upstream clone is opportunistic: it runs
-    only when the clone is present AND at the pinned commit, and skips
-    otherwise — a stale clone would verify the wrong tree."""
+    hashes in vendor/VENDOR-MANIFEST.json — frozen at vendor time from the
+    upstream committed tree (the manifest's upstream.method records the
+    git-archive provenance) — plus the complete-pin walk. Deterministic,
+    enforced on every machine, no upstream clone or subprocess required.
+
+    Review note: the former opportunistic live-clone byte check (git
+    rev-parse against a local ~/workspaces clone, skipped when the clone
+    was absent or stale) was removed from the unit suite — it depended on
+    non-deterministic external state and shelled out from the test layer.
+    Byte provenance is established once at vendor time and enforced on
+    every run by the recorded hashes below; any vendor drift still fails
+    the suite on any machine."""
 
     MANIFEST = os.path.join(ADDON_ROOT, "vendor", "VENDOR-MANIFEST.json")
 
@@ -71,17 +76,6 @@ class TestVendorPin(unittest.TestCase):  # A4
     def setUpClass(cls):
         with open(cls.MANIFEST) as f:
             cls.meta = json.load(f)
-
-    def _upstream_head_at_pin(self):
-        """True when a local upstream clone sits at the pinned commit."""
-        try:
-            head = subprocess.run(
-                ["git", "-C", UPSTREAM, "rev-parse", "HEAD"],
-                capture_output=True, text=True, check=True,
-            ).stdout.strip()
-        except (subprocess.CalledProcessError, FileNotFoundError, OSError):
-            return False
-        return head == self.meta["upstream"]["commit"]
 
     def test_vendor_manifest_pins_expected_upstream(self):
         self.assertEqual(self.meta["upstream"]["name"], "stack-bench")
@@ -112,22 +106,6 @@ class TestVendorPin(unittest.TestCase):  # A4
                 if rel != "VENDOR-MANIFEST.json" and rel not in self.meta["files"]:
                     unlisted.append(rel)
         self.assertEqual(unlisted, [])
-
-    def test_vendored_bytes_identical_to_upstream_git_head(self):
-        """Opportunistic live check: byte-identity against the upstream clone,
-        only when it sits at the pinned commit (skipped when the clone is
-        absent or stale; the recorded pins above still enforce integrity)."""
-        if not self._upstream_head_at_pin():
-            self.skipTest(
-                "upstream clone not present at pinned commit "
-                f"{self.meta['upstream']['commit'][:12]} ({UPSTREAM}); "
-                "recorded manifest pins still enforce pack integrity")
-        for rel in self.meta["files"]:
-            theirs = os.path.join(UPSTREAM, rel)
-            self.assertTrue(os.path.exists(theirs), f"upstream missing: {rel}")
-            self.assertEqual(
-                sha256(os.path.join(ADDON_ROOT, "vendor", rel)), sha256(theirs),
-                f"vendor drift: {rel}")
 
 
 class TestInternalApiPin(unittest.TestCase):  # A9
