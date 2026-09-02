@@ -224,8 +224,12 @@ class TestAdversarial(unittest.TestCase):  # A6
             big = json.dumps({"method": "stackbench.run", "params": {
                 "endpoint_url": "http://127.0.0.1:9", "run_id": "x" * 100000}}).encode()
             self.assertGreater(len(big), server.MAX_BODY)
-            code, _ = post_err(None, raw=big)
-            self.assertEqual(code, 413)
+            try:
+                post(None, raw=big)
+                self.fail("oversized body must not succeed")
+            except urllib.error.HTTPError as exc:
+                self.assertEqual(exc.code, 413)
+                self.assertEqual(exc.headers.get("Connection"), "close")  # advertised, not silent
 
     def test_garbage_endpoint_fails_without_fakery(self):
         with Service():
