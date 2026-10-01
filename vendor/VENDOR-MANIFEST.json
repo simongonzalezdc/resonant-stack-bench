@@ -1,0 +1,16 @@
+{
+  "files": {
+    "stack_bench.py": "5339c813f767607323d3e2e731404e4b4f0543c3a8e7497a2bdb77e1ac3545e8",
+    "tests/test_e2e_mock.py": "fb7d8461253259afae21c9dfffbc080395119dba795610dab1f1a97a9412c9ea"
+  },
+  "upstream": {
+    "commit": "68a50f0e7ab0ddc514e086bc385354b6afd3b3a5",
+    "license": "MIT",
+    "method": "git archive 68a50f0 -- stack_bench.py tests/test_e2e_mock.py (committed tree; working-tree-local edits NOT vendored)",
+    "name": "stack-bench",
+    "urls": [
+      "https://github.com/KyaniteLabs/stack-bench"
+    ],
+    "vendor": "KyaniteLabs"
+  }
+}

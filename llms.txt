@@ -1,0 +1,20 @@
+# Stack Bench — ResonantOS add-on
+
+> An honest local-inference benchmark, packaged as a ResonantOS 2.0.0-alpha add-on. It measures a local llama-server endpoint: prefill and decode tokens-per-second with true-token prompt sizing, plus an ambient-noise A/B check. No dashboards, no leaderboards — just numbers you can check yourself, written as plain JSON files you own. The benchmark engine is Stack Bench (MIT), vendored byte-identical under `vendor/`; the wrapper adds no dependencies (Python 3.10+ standard library only).
+
+## Canonical links
+
+- This repo (the ResonantOS add-on wrapper): https://github.com/simongonzalezdc/resonant-stack-bench
+- Stack Bench (canonical upstream, the benchmark engine): https://github.com/KyaniteLabs/stack-bench
+
+## Key facts
+
+- License: MIT (wrapper and upstream engine).
+- ResonantOS add-on validator: 0 errors, 0 warnings.
+- Wrapper: Python 3.10+ standard library only; local service on 127.0.0.1:4889.
+- Methods: `stackbench.status`, `stackbench.run`, `stackbench.results`. One run at a time.
+- Results land under `var/<timestamp>-<run_id>/` as `summary.json` + `rows.jsonl`, home paths redacted to `~`.
+
+## Relationship
+
+Community gift by Kyanite Labs for ResonantOS — canonical upstream: https://github.com/KyaniteLabs/stack-bench; this wrapper is non-canonical. If wrapper and upstream disagree, the canonical upstream wins.

@@ -1,0 +1,4 @@
+var/
+vendor/.selftest/
+__pycache__/
+*.pyc
